@@ -1,0 +1,27 @@
+{
+	"name": "improved-greiner-hormann",
+	"version": "0.1.0",
+	"description": "",
+	"exports": "./src/index.js",
+	"main": "./src/index.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/BadIdeaException/improved-greiner-hormann"
+	},
+	"scripts": {
+		"test": "node_modules/mocha/bin/mocha.js --colors --require test/mocha.conf.js --recursive --extension .spec.js",
+		"debug-test": "node_modules/mocha/bin/mocha.js --inspect=0.0.0.0:9229 --debug-brk --colors --require test/mocha.conf.js --recursive --extension .spec.js",
+		"debug-local-test": "node_modules/mocha/bin/mocha.js inspect --colors --require test/mocha.conf.js --recursive --extension .spec.js"
+	},
+	"type": "module",
+	"author": "BadIdeaException",
+	"license": "MIT",
+	"devDependencies": {
+		"chai": "^4.3.6",
+		"eslint-plugin-chai-expect": "^3.0.0",
+		"eslint-plugin-mocha": "^10.1.0",
+		"grunt": "^1.5.3",
+		"grunt-eslint": "^24.0.0",
+		"mocha": "^10.0.0"
+	}
+}
