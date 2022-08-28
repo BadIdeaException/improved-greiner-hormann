@@ -44,11 +44,16 @@ function side(Q, P1, P2, P3) {
 	}
 }
 
-export default function greinerHormann(subject, clip) {
+export default function greinerHormann(subject, clip, mode) {
 	subject ??= [];
 	clip ??= [];
-	if (subject.length === 0 || clip.length === 0) 
-		return [[]];
+	const _subject = subject;
+	const _clip = clip;
+
+	if (subject.length === 0)
+		return [ mode.SUBJECT_EMPTY(_subject, _clip) ];
+	if (clip.length === 0) 
+		return [ mode.CLIP_EMPTY(_subject, _clip) ];
 	if (subject.length < 3 || clip.length < 3)
 		throw new Error(`Cannot intersect with a polygon that has less than three points.`);
 
@@ -56,11 +61,9 @@ export default function greinerHormann(subject, clip) {
 			
 			Preparations. 
 
-			Save subject and clip in array form and convert them to circular doubly linked lists.
+			Convert polygons to circular doubly linked lists.
 
 	 ***************************************/
-	const _subject = subject;
-	const _clip = clip;
 
 	subject = VertexList.fromArray(subject);
 	clip = VertexList.fromArray(clip);
@@ -95,7 +98,6 @@ export default function greinerHormann(subject, clip) {
 			clip.forEach(Qcurr => {
 				if (!Qcurr.source) return;
 				let Qnext = Qcurr.find(Qnext => Qnext !== Qcurr && Qnext.source);
-					if (Pcurr.vertex.x === 2) debugger
 
 				// The signed areas of the triangles 
 				// 		Pcurr, Qcurr, Qnext
@@ -264,7 +266,7 @@ export default function greinerHormann(subject, clip) {
 	{
 		// Mark each intersection in the subject as either a crossing/bouncing INTERSECTION, or as an OVERLAP.
 		subject.forEach(curr => {
-			if (curr.intersection) {debugger
+			if (curr.intersection) {
 				// Get the points P+ and P- following and preceding the intersection in the subject polygon, 
 				// and the same for the clip polygon
 				let Pplus = curr.next;
@@ -354,11 +356,10 @@ export default function greinerHormann(subject, clip) {
 		// See Foster et al. p. 6			
 		let [ subjectStart, clipStart ] = [ subject, clip ].map(poly => poly.find(curr => !curr.intersection));
 		// Check that a non-intersection vertex existed in the subject polygon.
-		// If no such vertex existed, and every vertex is a shared vertex, 
-		// then subject and clip polygon are identical, 
-		// and we can return the input subject polygon.
+		// If no such vertex existed, and every vertex is an ON/ON vertex, 
+		// then subject and clip polygon are identical, and we can return the input subject polygon.
 		if (!subjectStart && subject.every(curr => curr.delayed === ON_ON))
-			return [ _subject ];
+			return [ mode.WITH_SELF(_subject, _clip) ];
 		else [ subjectStart, clipStart ] = [ subjectStart, clipStart ].map((start, index) => {
 			// Now either start is defined, meaning we already have a valid start vertex, or
 			// start is not defined but not every vertex of the polygon is an ON/ON vertex.
@@ -397,7 +398,7 @@ export default function greinerHormann(subject, clip) {
 			status = inside(poly.vertex, polys[(index + 1) % polys.length]) ? EXIT : ENTRY;
 
 			// Label all intersection points as entering or exiting
-			poly.forEach(curr => {debugger
+			poly.forEach(curr => {
 				if (curr.crossing === CROSSING) {
 					curr.entry = status;
 					status = !status;
@@ -428,11 +429,11 @@ export default function greinerHormann(subject, clip) {
 		// and return the contained one.
 		if (!curr) {
 			if (inside(clip.vertex, subject))
-				return [ _clip ];
+				return [ mode.CLIP_CONTAINED(_subject, _clip) ];
 			else if (inside(subject.vertex, clip))
-				return [ _subject ];
+				return [ mode.SUBJECT_CONTAINED(_subject, _clip) ];
 			else
-				return [[]];
+				return [ mode.DISJOINT(_subject, _clip) ];
 		}
 		
 		while (curr) {
@@ -443,7 +444,7 @@ export default function greinerHormann(subject, clip) {
 			result.push(resultComponent);
 
 			// Set traversal direction, depending on whether the current intersection is an entry or an exit
-			let dir = curr.entry ? 'next' : 'prev';
+			let dir = mode.INITIAL_DIRECTION(curr.entry);
 			let oppositeEntry = !curr.entry;
 			resultComponent.push(curr.vertex);
 
@@ -463,6 +464,7 @@ export default function greinerHormann(subject, clip) {
 				curr.corresponding.processed = true;
 				// Switch from one input polygon to the other
 				curr = curr.corresponding;
+				dir = mode.SWITCHED_POLYGON(dir);
 				oppositeEntry = !curr.entry;
 			} while (curr.vertex !== resultComponent[0]);
 			curr = firstUnprocessedCrossingIntersection(subject);
