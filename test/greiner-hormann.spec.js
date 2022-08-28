@@ -87,40 +87,6 @@ function generate(subject, clip) {
 
 
 describe('Greiner-Hormann polygon intersection with Foster et al. improvements', function() {
-	describe('degenerate input', function() {
-		let subject;
-		beforeEach(function() {
-			subject = [
-				{ x: 1, y: 1 },
-				{ x: 3, y: 1 },
-				{ x: 2, y: 5 },
-				{ x: -3, y:  5 },
-				{ x: -2, y: 2 }
-			];
-		});
-		it('should return the subject if clipped with itself', function() {			
-			let result = gh(subject, subject);
-			expect(result).to.be.an('array').with.lengthOf(1);
-			result = result[0];
-			result = reorder(result, subject);
-			expect(result).to.deep.equal(subject);
-		});
-
-		it('should return an empty polygon if one of the polygons is empty', function() {
-			mirror(subject, [], (P, Q) => {
-				let result = gh(P, Q);
-				expect(result).to.be.an('array').with.lengthOf(1);
-				expect(result[0]).to.be.empty;		
-			});
-		});
-
-		it('should throw when attempting to intersect with a point or a segment', function() {
-			let clip = [ { x: 5, y: 5 } ];
-			mirror(subject, clip, (P, Q) => expect(gh.bind(null, P, Q)).to.throw());
-			clip.push({ x: 8, y: 8 });
-			mirror(subject, clip, (P, Q) => expect(gh.bind(null, P, Q)).to.throw());
-		});
-	});
 
 	describe('normal crossing intersections', function() {
 		it('two convex polygons', function() {
@@ -180,7 +146,7 @@ describe('Greiner-Hormann polygon intersection with Foster et al. improvements',
 		});
 	});
 
-	it('should return an empty polygon if there is no intersection', function() {
+	it('no intersection', function() {
 		let subject = readPoly('test/fixtures/subject/concave.poly')[0];
 		let clip = subject.map(v => ({ x: v.x + 100, y: v.y }));
 		mirror(subject, clip, (P, Q) => {
@@ -189,4 +155,32 @@ describe('Greiner-Hormann polygon intersection with Foster et al. improvements',
 			expect(result[0]).to.be.empty;			
 		});
 	});
+
+	it('all vertices of the clip polygon are on edges', function() {
+		['convex','concave'].forEach(subject => generate(subject, 'bounce-inside-all'));
+	});
+
+	it('clipping with same polygon', function() {			
+		['convex','concave'].forEach(subject => generate(subject, subject));
+	});
+
+	it('one of the polygons is empty', function() {
+		['convex','concave'].forEach(subject => {
+			subject = readPoly(`test/fixtures/subject/${subject}.poly`);
+			mirror(subject, [], (P, Q) => {
+				let result = gh(P, Q);
+				expect(result).to.be.an('array').with.lengthOf(1);
+				expect(result[0]).to.be.empty;		
+			});
+		});
+	});
+
+	it('intersecting with a point or a segment throws', function() {
+		let subject = readPoly(`test/fixtures/subject/convex.poly`); // Doesn't really matter anyway
+		let clip = [ { x: 5, y: 5 } ];
+		mirror(subject, clip, (P, Q) => expect(gh.bind(null, P, Q)).to.throw());
+		clip.push({ x: 8, y: 8 });
+		mirror(subject, clip, (P, Q) => expect(gh.bind(null, P, Q)).to.throw());
+	});
+
 });
