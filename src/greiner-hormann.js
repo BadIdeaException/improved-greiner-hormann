@@ -4,7 +4,7 @@ import { A, inside, sign } from './util.js';
 // Floating point precision. Two numbers will be considered equal if their difference is less than EPSILON.
 const EPSILON = 1.0e-8;
 
-// Constants to describe the mode of coincident vertices/edges
+// Constants to describe the mode of coincident vertices on chains of shared edges.
 // See Foster et al. p. 5
 const LEFT_ON = 1;
 const RIGHT_ON = 2;
@@ -51,9 +51,9 @@ export default function greinerHormann(subject, clip, mode) {
 	const _clip = clip;
 
 	if (subject.length === 0)
-		return [ mode.SUBJECT_EMPTY(_subject, _clip) ];
+		return mode.SUBJECT_EMPTY(_subject, _clip);
 	if (clip.length === 0) 
-		return [ mode.CLIP_EMPTY(_subject, _clip) ];
+		return mode.CLIP_EMPTY(_subject, _clip);
 	if (subject.length < 3 || clip.length < 3)
 		throw new Error(`Cannot intersect with a polygon that has less than three points.`);
 
@@ -280,28 +280,28 @@ export default function greinerHormann(subject, clip, mode) {
 				if ((Pplus.intersection && (Pplus.corresponding === Qplus || Pplus.corresponding === Qminus)) 
 					|| (Pminus.intersection && (Pminus.corresponding === Qplus || Pminus.corresponding === Qminus))) {
 					// We have an OVERLAP
-					// Determine the type of (delayed) intersection we have here:
+					// Determine the type of (chain) intersection we have here:
 					// With each edge, P, can either change from being to one side of Q, stay on Q, or diverge to one side again.
 					if ((Pplus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === RIGHT)
 						|| (Pplus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === RIGHT)) {
 						// P changes from being LEFT of Q to being ON Q at curr
-						curr.delayed = LEFT_ON;
+						curr.chain = LEFT_ON;
 					} else if ((Pplus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === LEFT) 
 						|| (Pplus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === LEFT)) {
 						// P changes from being RIGHT of Q to being ON Q at curr
-						curr.delayed = RIGHT_ON;
+						curr.chain = RIGHT_ON;
 					} else if ((Pplus.corresponding === Qplus && Pminus.corresponding === Qminus) 
 						|| (Pplus.corresponding === Qminus && Pminus.corresponding === Qplus)) {
 						// P is ON Q on both sides of curr
-						curr.delayed = ON_ON;					
+						curr.chain = ON_ON;					
 					} else if ((Pminus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === RIGHT)
 						|| (Pminus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === RIGHT)) {
 						// P changes from being ON Q to being LEFT of Q at curr
-						curr.delayed = ON_LEFT;
+						curr.chain = ON_LEFT;
 					} else if ((Pminus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === LEFT)
 						|| (Pminus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === LEFT)) {
 						// P changes from being ON Q to being RIGHT of Q at curr
-						curr.delayed = ON_RIGHT;
+						curr.chain = ON_RIGHT;
 					}
 				} else {
 					// We have an INTERSECTION
@@ -321,17 +321,17 @@ export default function greinerHormann(subject, clip, mode) {
 		// Process overlaps by marking them as (delayed) crossings/bouncings
 		let chainStartSide;
 		subject.forEach(curr => {
-			if (!curr.delayed) return;
+			if (!curr.chain) return;
 
 			// Initialize chainStartSide
-			chainStartSide ??= curr.delayed;
+			chainStartSide ??= curr.chain;
 			// Unless we are at the last point of the common chain, mark the intersection as BOUNCING
-			if (curr.delayed <= ON_ON) {
+			if (curr.chain <= ON_ON) {
 				curr.crossing = BOUNCING;
 			} else {
 				// If we are at the last point, mark the intersection as BOUNCING if the last vertex is
 				// on the same side as the first vertex was, and as crossing if it is on the other side.
-				curr.crossing = curr.delayed - ON_ON === chainStartSide ? BOUNCING : CROSSING;
+				curr.crossing = curr.chain - ON_ON === chainStartSide ? BOUNCING : CROSSING;
 				// Reset chainStartSide
 				chainStartSide = undefined;
 			}
@@ -358,8 +358,8 @@ export default function greinerHormann(subject, clip, mode) {
 		// Check that a non-intersection vertex existed in the subject polygon.
 		// If no such vertex existed, and every vertex is an ON/ON vertex, 
 		// then subject and clip polygon are identical, and we can return the input subject polygon.
-		if (!subjectStart && subject.every(curr => curr.delayed === ON_ON))
-			return [ mode.WITH_SELF(_subject, _clip) ];
+		if (!subjectStart && subject.every(curr => curr.chain === ON_ON))
+			return mode.WITH_SELF(_subject, _clip);
 		else [ subjectStart, clipStart ] = [ subjectStart, clipStart ].map((start, index) => {
 			// Now either start is defined, meaning we already have a valid start vertex, or
 			// start is not defined but not every vertex of the polygon is an ON/ON vertex.
@@ -367,12 +367,12 @@ export default function greinerHormann(subject, clip, mode) {
 				// At this point, we know there is at least one vertex that is not an ON/ON vertex 
 				// and thus adjacent to an edge that is not a shared edge.
 				// Find that vertex.
-				start = [ subject, clip][index].find(curr => curr.delayed !== ON_ON);
+				start = [ subject, clip][index].find(curr => curr.chain !== ON_ON);
 				// If it is a LEFT/ON or a RIGHT/ON vertex, move the start back one...
-				if (start.delayed < ON_ON) 
+				if (start.chain < ON_ON) 
 					start = start.prev;
 				// ...or if it is an ON/LEFT or an ON/RIGHT vertex, move the start forward one.
-				else if (start.delayed > ON_ON)
+				else if (start.chain > ON_ON)
 					start = start.next;
 				// Now we know for sure that start is not on one of the polygon's edges.
 				// Create a new virtual vertex halfway between start and its successor and insert it
@@ -416,8 +416,8 @@ export default function greinerHormann(subject, clip, mode) {
 	 ***************************************/
 	let result = [];
 	{
-		// Returns the first unprocessed intersection point in the polygon, or null if there are no
-		// unprocessed intersection points.
+		// Returns the first unprocessed crossing intersection point in the polygon, or null if there are no
+		// unprocessed crossing intersection points.
 		// eslint-disable-next-line no-inner-declarations
 		function firstUnprocessedCrossingIntersection(poly) {
 			return poly.find(curr => curr.intersection && curr.crossing && !curr.processed);
@@ -428,12 +428,12 @@ export default function greinerHormann(subject, clip, mode) {
 		// If there are no intersections at all, check if one polygon is contained entirely within the other,
 		// and return the contained one.
 		if (!curr) {
-			if (inside(clip.vertex, subject))
-				return [ mode.CLIP_CONTAINED(_subject, _clip) ];
-			else if (inside(subject.vertex, clip))
-				return [ mode.SUBJECT_CONTAINED(_subject, _clip) ];
+			if (clip.some(entry => inside(entry.vertex, subject)))
+				return mode.CLIP_CONTAINED(_subject, _clip);
+			else if (subject.some(entry => inside(entry.vertex, clip)))
+				return mode.SUBJECT_CONTAINED(_subject, _clip);
 			else
-				return [ mode.DISJOINT(_subject, _clip) ];
+				return mode.DISJOINT(_subject, _clip);
 		}
 		
 		while (curr) {

@@ -40,7 +40,11 @@ export default class VertexList {
 	}
 
 	every(predicate) {
-		return this.find((entry, index, list) => !predicate(entry, index, list));
+		return !this.find((entry, index, list) => !predicate(entry, index, list));
+	}
+
+	some(predicate) {
+		return !!this.find(predicate);
 	}
 
 	toArray() {
