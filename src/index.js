@@ -60,7 +60,7 @@ const DIFFERENCE = {
 		for (let i = 0; i < clip.length; i++) {
 			let Q1 = clip[i];
 			let Q2 = clip[(i + 1) % clip.length];
-			if (Q1.y <= y && Q2.y > y) {
+			if (Q1.y <= y && Q2.y > y || Q1.y > y && Q2.y <= y) {
 				let alpha = (y - Q1.y) / (Q2.y - Q1.y);
 				Cx = Q1.x + alpha * (Q2.x - Q1.x);
 				break;
@@ -111,7 +111,7 @@ const DIFFERENCE = {
 			let P1 = subject[(i1 + j) % subject.length];
 			let P2 = subject[(i1 + j + 1) % subject.length];
 			// Find an edge crossing the bisection line DOWNWARD
-			if (P1.y >= y && P2.y < y) {
+			if (P1.y > y && P2.y <= y) {
 				let alpha = (y - P1.y) / (P2.y - P1.y);
 				let x = P1.x + alpha * (P2.x - P1.x);
 				if (sign(x - Cx) !== sign(S1.x - Cx)) { // One of S1.x - Cx or S2.x - Cx may be zero
