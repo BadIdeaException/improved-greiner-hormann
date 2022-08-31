@@ -282,7 +282,11 @@ export default function greinerHormann(subject, clip, mode) {
 					// We have an OVERLAP
 					// Determine the type of (chain) intersection we have here:
 					// With each edge, P, can either change from being to one side of Q, stay on Q, or diverge to one side again.
-					if ((Pplus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === RIGHT)
+					if ((Pplus.corresponding === Qplus && Pminus.corresponding === Qminus) 
+						|| (Pplus.corresponding === Qminus && Pminus.corresponding === Qplus)) {
+						// P is ON Q on both sides of curr
+						curr.chain = ON_ON;
+					} else if ((Pplus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === RIGHT)
 						|| (Pplus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === RIGHT)) {
 						// P changes from being LEFT of Q to being ON Q at curr
 						curr.chain = LEFT_ON;
@@ -290,10 +294,6 @@ export default function greinerHormann(subject, clip, mode) {
 						|| (Pplus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === LEFT)) {
 						// P changes from being RIGHT of Q to being ON Q at curr
 						curr.chain = RIGHT_ON;
-					} else if ((Pplus.corresponding === Qplus && Pminus.corresponding === Qminus) 
-						|| (Pplus.corresponding === Qminus && Pminus.corresponding === Qplus)) {
-						// P is ON Q on both sides of curr
-						curr.chain = ON_ON;					
 					} else if ((Pminus.corresponding === Qminus && side(Qplus, Pminus, curr, Pplus) === RIGHT)
 						|| (Pminus.corresponding === Qplus && side(Qminus, Pminus, curr, Pplus) === RIGHT)) {
 						// P changes from being ON Q to being LEFT of Q at curr
