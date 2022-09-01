@@ -92,7 +92,7 @@ describe('Intersection', function() {
 		});
 	});
 
-	describe('Special cases', function() {
+	describe('special cases', function() {
 		it('disjoint', function() {
 			let subject = readPoly('test/fixtures/subject/concave.poly')[0];
 			let clip = subject.map(v => ({ x: v.x + 100, y: v.y }));
