@@ -11,10 +11,7 @@ export function readPoly(file) {
 		.filter(component => component !== '')
 		.map(component => component
 			.split(',')
-			.map(vertex => ({
-				x: Number(vertex.split(' ')[0]),
-				y: Number(vertex.split(' ')[1])
-			}))
+			.map(vertex => vertex.split(' ').map(Number))
 		);
 }
 
@@ -23,7 +20,7 @@ export function readPoly(file) {
 // and by aligning the start point to expected
 export function reorder(result, expected) {
 	// Compares two 2D points
-	const equals = (p, q) => Math.abs(p.x - q.x) < EPSILON && Math.abs(p.y - q.y) < EPSILON;
+	const equals = (p, q) => Math.abs(p[0] - q[0]) < EPSILON && Math.abs(p[1] - q[1]) < EPSILON;
 
 	// Find the index of expected[0] in result
 	let index = result.findIndex(equals.bind(null, expected[0]));
@@ -55,8 +52,8 @@ export function expectPolyEqual(actual, expected) {
 	// because we need to account for floating-point imprecision.
 	// So we need to compare every vertex by hand here.	
 	expected.forEach((vertex, index) => {
-		expect(actual[index].x).to.be.approximately(vertex.x, EPSILON);
-		expect(actual[index].y).to.be.approximately(vertex.y, EPSILON);
+		expect(actual[index][0]).to.be.approximately(vertex[0], EPSILON);
+		expect(actual[index][1]).to.be.approximately(vertex[1], EPSILON);
 });
 
 }

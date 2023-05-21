@@ -19,12 +19,11 @@ function generate(subject, clip) {
 
 	mirror(subject, clip, (P, Q) => {
 		let result = intersect(P, Q);
-
 		expect(result).to.be.an('array').with.lengthOf(expected.length);			
 		// Check that all expected components are present in the result
 		expected.forEach(expectedComponent => {
 			// Find a component in the intersection result that includes all vertices of the current expected component
-			let resultComponent = result.find(component => component.every(resultVertex => expectedComponent.some(expectedVertex => Math.abs(resultVertex.x - expectedVertex.x) < EPSILON && Math.abs(resultVertex.y - expectedVertex.y) < EPSILON)));			
+			let resultComponent = result.find(component => component.every(resultVertex => expectedComponent.some(expectedVertex => Math.abs(resultVertex[0] - expectedVertex[0]) < EPSILON && Math.abs(resultVertex[1] - expectedVertex[1]) < EPSILON)));			
 			expect(resultComponent).to.exist;
 			expectPolyEqual(resultComponent, expectedComponent);
 		});
@@ -95,7 +94,7 @@ describe('Intersection', function() {
 	describe('special cases', function() {
 		it('disjoint', function() {
 			let subject = readPoly('test/fixtures/subject/concave.poly')[0];
-			let clip = subject.map(v => ({ x: v.x + 100, y: v.y }));
+			let clip = subject.map(v => [ v[0] + 100, v[1] ]);
 			mirror(subject, clip, (P, Q) => {
 				let result = intersect(P, Q);
 				expect(result).to.be.an('array').with.lengthOf(1);
@@ -128,12 +127,17 @@ describe('Intersection', function() {
 
 		it('intersecting with a point or a segment throws', function() {
 			let subject = readPoly(`test/fixtures/subject/convex.poly`); // Doesn't really matter anyway
-			let clip = [ { x: 5, y: 5 } ];
+			let clip = [ [ 5, 5 ] ];
 			mirror(subject, clip, (P, Q) => expect(intersect.bind(null, P, Q)).to.throw());
-			clip.push({ x: 8, y: 8 });
+			clip.push([ 8, 8 ]);
 			mirror(subject, clip, (P, Q) => expect(intersect.bind(null, P, Q)).to.throw());
 		});
+	});
 
-
+	describe('improvements and generalizations', function() {
+		it('split vertices', function() {
+			generate('Fig14-P', 'Fig14-Q');
+		});
+		it('glued edges');
 	})
 });

@@ -3,7 +3,7 @@ const EPSILON = 1.0e-8;
 // Helper function that computes twice the signed area of the triangle formed by P, Q and R.
 // See Foster et al. p. 4
 export function A(P, Q, R) {
-	return (Q.x - P.x) * (R.y - P.y) - (Q.y - P.y) * (R.x - P.x);
+	return (Q[0] - P[0]) * (R[1] - P[1]) - (Q[1] - P[1]) * (R[0] - P[0]);
 }
 
 
@@ -25,12 +25,12 @@ export function inside(point, poly) {
 		let a = curr.vertex;
 		let b = (curr.next ?? poly).vertex;
 
-		if (a.y <= point.y) { // edge starts below  the point
-			if (b.y > point.y // edge ends above the point => it is an upward crossing
+		if (a[1] <= point[1]) { // edge starts below  the point
+			if (b[1] > point[1] // edge ends above the point => it is an upward crossing
 				&& isLeft(a, b, point) > 0) // point is left of the edge
 					wn++; // Ray intersects an upward edge
 		} else // edge starts above the point
-			if (b.y <= point.y // edge ends "below" the point => it is a downward crossing
+			if (b[1] <= point[1] // edge ends "below" the point => it is a downward crossing
 				&& isLeft(a, b, point) < 0) // point is right of the edge
 					wn--; // Ray intersects a downward edge
 		curr = curr.next;

@@ -6,12 +6,12 @@ This is a pure Javascript zero-dependency implementation of the [Greiner-Hormann
 
 NodeJS:
 ```
-npm install improved-greiner-hormann
+npm install git+https://git@github.com/BadIdeaException/improved-greiner-hormann.git
 ```
 
 ## Use
 
-The algorithm takes two arrays of vertices of the form `{ x,y }` for the subject and clip polygon, resp., and returns an array of resulting polygons in the same format. The first and last point of the input arrays are not required to be identical (i.e. the polygon is not required to be explicitly closed). Input polygons must be [simple](https://en.wikipedia.org/wiki/Simple_polygon), i.e. they may not self-intersect. They must have a non-zero area. They may be concave. There are no requirements on their winding direction (clockwise or counter-clockwise), but no guarantees are made on the winding direction of the result polygons, either. 
+The algorithm takes two arrays of vertices of the form `[ x, y ]` for the subject and clip polygon, resp., and returns an array of resulting polygons in the same format. The first and last point of the input arrays are not required to be identical (i.e. the polygon is not required to be explicitly closed). Input polygons must be [simple](https://en.wikipedia.org/wiki/Simple_polygon), i.e. they may not self-intersect. They must have a non-zero area. They may be concave. There are no requirements on their winding direction (clockwise or counter-clockwise), but no guarantees are made on the winding direction of the result polygons, either. 
 
 Note that, although the algorithms presented by Greiner and Hormann as well as Foster et al. allow for multi-component polygons, this implementation does not support them. (Because the underlying data structure of polygons as arrays of vertices forming an implicitly-closed loop does not allow it.) In particular, this means polygons may not have holes. If an operation (union, difference) would result in a polygon containing a hole, the result is split into several polygons.
 
@@ -19,19 +19,48 @@ Note that, although the algorithms presented by Greiner and Hormann as well as F
 import { intersect, union, difference } from 'improved-greiner-hormann';
 
 const subject = [
-  { x: 1, y: 1 },
-  { x: 3, y: 1 },
-  { x: 2, y: 3 }
+  [ 1, 1 ],
+  [ 3, 1 ],
+  [ 2, 3 ]
 ];
 const clip = [ 
-  { x: 1, y: 3 },
-  { x: 3, y: 3 },
-  { x: 2, y: 1 }
+  [ 1, 3 ],
+  [ 2, 1 ],
+  [ 3, 3 ]
 ]
 
-intersect(subject, clip);
+intersect(subject, clip); 
+/* [
+  [
+    [ 2.5, 2 ],
+    [ 2, 3 ],
+    [ 1.5, 2 ],
+    [ 2, 1 ]
+  ]
+] */
+
 union(subject, clip);
+/* [
+  [
+    [ 2.5, 2 ],
+    [ 3, 1 ],
+    [ 1, 1 ],
+    [ 1.5, 2 ],
+    [ 1, 3 ],
+    [ 3, 3 ]
+  ]
+] */
+
 difference(subject, clip);
+/* [
+  [
+    [ 2.5, 2 ],
+    [ 3, 1 ],
+    [ 1, 1 ],
+    [ 1.5, 2 ],
+    [ 2, 1 ]
+  ]
+] */
 ```
 
 ## Tests

@@ -119,10 +119,10 @@ export default function greinerHormann(subject, clip, mode) {
 					// Calculate alpha and beta from the signed areas of the triangles. See Foster et al. p. 4.
 					const alpha = APcurr / (APcurr - APnext);
 					const beta = AQcurr / (AQcurr - AQnext); // AQcurr === AQnext iff APcurr === APnext, which we already know is not the case.
-					const I = {
-						x: Pcurr.vertex.x + alpha * (Pnext.vertex.x - Pcurr.vertex.x),
-						y: Pcurr.vertex.y + alpha * (Pnext.vertex.y - Pcurr.vertex.y)
-					}
+					const I = [
+						Pcurr.vertex[0] + alpha * (Pnext.vertex[0] - Pcurr.vertex[0]),
+						Pcurr.vertex[1] + alpha * (Pnext.vertex[1] - Pcurr.vertex[1])
+					]
 					if (0 < alpha && alpha < 1 && 0 < beta && beta < 1) {
 						// X-intersection ("normal" case) according to Foster et al.
 						// Insert the intersection point into both P and Q according to the alpha/beta values.
@@ -186,15 +186,11 @@ export default function greinerHormann(subject, clip, mode) {
 					// 		Pcurr = beta + beta * (Qnext - Qcurr)
 					// According to Foster et al., this can be achieved as below:
 					const alpha = 
-						((Qcurr.vertex.x - Pcurr.vertex.x) * (Pnext.vertex.x - Pcurr.vertex.x) + (Qcurr.vertex.y - Pcurr.vertex.y) * (Pnext.vertex.y - Pcurr.vertex.y)) /
-						((Pnext.vertex.x - Pcurr.vertex.x) ** 2 + (Pnext.vertex.y - Pcurr.vertex.y) ** 2);
-						// Vector.dot(Qcurr.vertex.subtract(Pcurr.vertex), Pnext.vertex.subtract(Pcurr.vertex)) /
-						// Vector.dot(Pnext.vertex.subtract(Pcurr.vertex), Pnext.vertex.subtract(Pcurr.vertex));
+						((Qcurr.vertex[0] - Pcurr.vertex[0]) * (Pnext.vertex[0] - Pcurr.vertex[0]) + (Qcurr.vertex[1] - Pcurr.vertex[1]) * (Pnext.vertex[1] - Pcurr.vertex[1])) /
+						((Pnext.vertex[0] - Pcurr.vertex[0]) ** 2 + (Pnext.vertex[1] - Pcurr.vertex[1]) ** 2);
 					const beta = 
-						((Pcurr.vertex.x - Qcurr.vertex.x) * (Qnext.vertex.x - Qcurr.vertex.x) + (Pcurr.vertex.y - Qcurr.vertex.y) * (Qnext.vertex.y - Qcurr.vertex.y)) /
-						((Qnext.vertex.x - Qcurr.vertex.x) ** 2 + (Qnext.vertex.y - Qcurr.vertex.y) ** 2);
-						// Vector.dot(Pcurr.vertex.subtract(Qcurr.vertex), Qnext.vertex.subtract(Qcurr.vertex)) /
-						// Vector.dot(Qnext.vertex.subtract(Qcurr.vertex), Qnext.vertex.subtract(Qcurr.vertex));
+						((Pcurr.vertex[0] - Qcurr.vertex[0]) * (Qnext.vertex[0] - Qcurr.vertex[0]) + (Pcurr.vertex[1] - Qcurr.vertex[1]) * (Qnext.vertex[1] - Qcurr.vertex[1])) /
+						((Qnext.vertex[0] - Qcurr.vertex[0]) ** 2 + (Qnext.vertex[1] - Qcurr.vertex[1]) ** 2);
 
 					if (0 < alpha && alpha < 1 && 0 < beta && beta < 1) {
 						// X-overlap according to Foster et al.
@@ -378,10 +374,10 @@ export default function greinerHormann(subject, clip, mode) {
 				// Create a new virtual vertex halfway between start and its successor and insert it
 				// into the polygon.
 				const entry = new VertexList({
-					vertex: {
-						x: (start.vertex.x + start.next.vertex.x) / 2,
-						y: (start.vertex.y + start.next.vertex.y) / 2
-					}
+					vertex: [
+						(start.vertex[0] + start.next.vertex[0]) / 2,
+						(start.vertex[1] + start.next.vertex[1]) / 2
+					]
 				});
 				start.insert(entry);
 				start = entry;			
@@ -402,9 +398,9 @@ export default function greinerHormann(subject, clip, mode) {
 				if (curr.crossing === CROSSING) {
 					curr.entry = status;
 					status = !status;
-				}			
-			});
-		});	
+				}
+			})
+		})
 	}
 
 	/***************************************
@@ -460,7 +456,7 @@ export default function greinerHormann(subject, clip, mode) {
 					resultComponent.push(curr.vertex);
 				} while (curr.entry !== oppositeEntry); // Includes when curr.entry === undefined
 				// When we reach an intersection, mark it as processed
-				curr.processed = true;	
+				curr.processed = true;
 				curr.corresponding.processed = true;
 				// Switch from one input polygon to the other
 				curr = curr.corresponding;

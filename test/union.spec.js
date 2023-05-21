@@ -24,7 +24,7 @@ function generate(subject, clip) {
 		// Check that all expected components are present in the result
 		expected.forEach(expectedComponent => {
 			// Find a component in the intersection result that includes all vertices of the current expected component
-			let resultComponent = result.find(component => component.every(resultVertex => expectedComponent.some(expectedVertex => Math.abs(resultVertex.x - expectedVertex.x) < EPSILON && Math.abs(resultVertex.y - expectedVertex.y) < EPSILON)));
+			let resultComponent = result.find(component => component.every(resultVertex => expectedComponent.some(expectedVertex => Math.abs(resultVertex[0] - expectedVertex[0]) < EPSILON && Math.abs(resultVertex[1] - expectedVertex[1]) < EPSILON)));
 			expect(resultComponent).to.exist;
 			expectPolyEqual(resultComponent, expectedComponent);
 		});
@@ -94,13 +94,13 @@ describe('Union', function() {
 	describe('special cases', function() {
 		it('disjoint', function() {
 			let subject = readPoly('test/fixtures/subject/concave.poly')[0];
-			let clip = subject.map(v => ({ x: v.x + 100, y: v.y }));
+			let clip = subject.map(v => [ v[0] + 100, v[1] ]);
 			mirror(subject, clip, (P, Q) => {
 				let result = union(P, Q);
 				expect(result).to.be.an('array').with.lengthOf(2);
 				// result should contain both P and Q.
 				// If it is not in the order P,Q reverse it.
-				if (!P.find(vertex => Math.abs(vertex.x - result[0][0].x) < EPSILON && Math.abs(vertex.y - result[0][0].y) < EPSILON)) {
+				if (!P.find(vertex => Math.abs(vertex[0] - result[0][0][0]) < EPSILON && Math.abs(vertex[1] - result[0][0][1]) < EPSILON)) {
 					result.reverse();
 				}
 				result.forEach((component, index) => expectPolyEqual(component, [ P, Q ][index]));
@@ -134,30 +134,30 @@ describe('Union', function() {
 
 		it('union with a point or a segment throws', function() {
 			let subject = readPoly(`test/fixtures/subject/convex.poly`); // Doesn't really matter anyway
-			let clip = [ { x: 5, y: 5 } ];
+			let clip = [ [ 5, 5 ] ];
 			mirror(subject, clip, (P, Q) => expect(union.bind(null, P, Q)).to.throw());
-			clip.push({ x: 8, y: 8 });
+			clip.push([ 8, 8 ]);
 			mirror(subject, clip, (P, Q) => expect(union.bind(null, P, Q)).to.throw());
 		});
 
 		it('two polygons that together would enclose a hole', function() {
 			// Subject looks like a letter "c"
 			const subject = [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 1 },
-				{ x: -2, y: 1 },
-				{ x: -2, y: 2 },
-				{ x: 0, y: 2 },
-				{ x: 0, y: 3 },
-				{ x: -3, y: 3 },
-				{ x: -3, y: 0 }
+				[ 0, 0 ],
+				[ 0, 1 ],
+				[ -2, 1 ],
+				[ -2, 2 ],
+				[ 0, 2 ],
+				[ 0, 3 ],
+				[ -3, 3 ],
+				[ -3, 0 ]
 			];
 			// Clip is the y-axis mirror image of subject
-			const clip = subject.map(vertex => ({ x: Math.abs(vertex.x), y: vertex.y }));	
+			const clip = subject.map(vertex => [ Math.abs(vertex[0]), vertex[1] ]);	
 			mirror(subject, clip, (P, Q) => {
 				let result = union(P, Q);
 				expect(result).to.be.an('array').with.lengthOf(2);
-				if (result[0].some(vertex => vertex.x > 0)) 
+				if (result[0].some(vertex => vertex[0] > 0)) 
 					result.reverse();
 				expectPolyEqual(result[0], subject);
 				expectPolyEqual(result[1], clip);

@@ -9,8 +9,8 @@ const INTERSECT = {
 	SUBJECT_CONTAINED: (subject, clip) => [ subject ],
 	CLIP_CONTAINED: (subject, clip) => [ clip ],
 	DISJOINT: (subject, clip) => [ [] ],
-	INITIAL_DIRECTION: entry => entry ? 'next' : 'prev',
-	SWITCHED_POLYGON: entry => entry
+	INITIAL_DIRECTION: direction => direction ? 'next' : 'prev',
+	SWITCHED_POLYGON: direction => direction
 }
 
 const UNION = {
@@ -20,8 +20,8 @@ const UNION = {
 	SUBJECT_CONTAINED: (subject, clip) => [ clip ],
 	CLIP_CONTAINED: (subject, clip) => [ subject ],
 	DISJOINT: (subject, clip) => [ subject, clip ],
-	INITIAL_DIRECTION: entry => entry ? 'prev' : 'next',
-	SWITCHED_POLYGON: entry => entry
+	INITIAL_DIRECTION: direction => direction ? 'prev' : 'next',
+	SWITCHED_POLYGON: direction => direction
 }
 
 const DIFFERENCE = {
@@ -54,15 +54,15 @@ const DIFFERENCE = {
 			algorithm on them separately.
 		*/
 	
-		let y = (Math.min(...clip.map(v => v.y)) + Math.max(...clip.map(v => v.y))) / 2;
+		let y = (Math.min(...clip.map(v => v[1])) + Math.max(...clip.map(v => v[1]))) / 2;
 		// The x-coordinate of the clip intersection
 		let Cx;
 		for (let i = 0; i < clip.length; i++) {
 			let Q1 = clip[i];
 			let Q2 = clip[(i + 1) % clip.length];
-			if (Q1.y <= y && Q2.y > y || Q1.y > y && Q2.y <= y) {
-				let alpha = (y - Q1.y) / (Q2.y - Q1.y);
-				Cx = Q1.x + alpha * (Q2.x - Q1.x);
+			if (Q1[1] <= y && Q2[1] > y || Q1[1] > y && Q2[1] <= y) {
+				let alpha = (y - Q1[1]) / (Q2[1] - Q1[1]);
+				Cx = Q1[0] + alpha * (Q2[0] - Q1[0]);
 				break;
 			}
 		}
@@ -77,13 +77,13 @@ const DIFFERENCE = {
 			let P1 = subject[i];
 			let P2 = subject[(i + 1) % subject.length];
 			// Find an edge crossing the bisection line UPWARD
-			if (P1.y <= y && P2.y > y) {
-				let alpha = (y - P1.y) / (P2.y - P1.y);
-				let x = P1.x + alpha * (P2.x - P1.x);
+			if (P1[1] <= y && P2[1] > y) {
+				let alpha = (y - P1[1]) / (P2[1] - P1[1]);
+				let x = P1[0] + alpha * (P2[0] - P1[0]);
 				// If the newly found upward intersection is closer to C than the previous one (or if none had been set yet),
 				// make this our new S1
-				if (S1 === undefined || Math.abs(x - Cx) < Math.abs(S1.x - Cx)) {
-					S1 = { x, y };
+				if (S1 === undefined || Math.abs(x - Cx) < Math.abs(S1[0] - Cx)) {
+					S1 = [ x, y ];
 					// Remember the index
 					i1 = i;
 				}
@@ -111,11 +111,11 @@ const DIFFERENCE = {
 			let P1 = subject[(i1 + j) % subject.length];
 			let P2 = subject[(i1 + j + 1) % subject.length];
 			// Find an edge crossing the bisection line DOWNWARD
-			if (P1.y > y && P2.y <= y) {
-				let alpha = (y - P1.y) / (P2.y - P1.y);
-				let x = P1.x + alpha * (P2.x - P1.x);
-				if (sign(x - Cx) !== sign(S1.x - Cx)) { // One of S1.x - Cx or S2.x - Cx may be zero
-					S2 = { x, y };
+			if (P1[1] > y && P2[1] <= y) {
+				let alpha = (y - P1[1]) / (P2[1] - P1[1]);
+				let x = P1[0] + alpha * (P2[0] - P1[0]);
+				if (sign(x - Cx) !== sign(S1[0] - Cx)) { // One of S1.x - Cx or S2.x - Cx may be zero
+					S2 = [ x, y ];
 					i2 = (i1 + j) % subject.length;
 					break;
 				}
@@ -141,8 +141,8 @@ const DIFFERENCE = {
 		return difference(subject1, clip).concat(difference(subject2, clip));
 	},
 	DISJOINT: (subject, clip) => [ subject ],
-	INITIAL_DIRECTION: entry => entry ? 'prev' : 'next',
-	SWITCHED_POLYGON: entry => entry === 'prev' ? 'next' : 'prev'
+	INITIAL_DIRECTION: direction => direction ? 'prev' : 'next',
+	SWITCHED_POLYGON: direction => direction === 'prev' ? 'next' : 'prev'
 }
 /* eslint-enable no-unused-vars */
 

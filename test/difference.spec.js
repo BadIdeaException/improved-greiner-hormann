@@ -54,7 +54,7 @@ describe('Difference', function() {
 		expected.forEach(expectedComponent => {
 			let resultComponent = result.find(resultComponent => 
 						resultComponent.every(resultVertex => 
-						expectedComponent.some(expectedVertex => Math.abs(resultVertex.x - expectedVertex.x) < EPSILON && Math.abs(resultVertex.y - expectedVertex.y) < EPSILON)));
+						expectedComponent.some(expectedVertex => Math.abs(resultVertex[0] - expectedVertex[0]) < EPSILON && Math.abs(resultVertex[1] - expectedVertex[1]) < EPSILON)));
 			
 			expect(resultComponent).to.exist;
 			resultComponent = reorder(resultComponent, expectedComponent);
@@ -64,28 +64,28 @@ describe('Difference', function() {
 
 	it('clip contained in subject with touching sides', function() {
 		const subject = [
-			{ x: 0, y: 0 },
-			{ x: 4, y: 0 },
-			{ x: 4, y: 4 },
-			{ x: 0, y: 4 }
+			[ 0, 0 ],
+			[ 4, 0 ],
+			[ 4, 4 ],
+			[ 0, 4 ]
 		];
 		const clip = [
-			{ x: 0, y: 1 },
-			{ x: 4, y: 1 },
-			{ x: 4, y: 3 },
-			{ x: 0, y: 3 }
+			[ 0, 1 ],
+			[ 4, 1 ],
+			[ 4, 3 ],
+			[ 0, 3 ]
 		];
 		const expected = [
 			[
-				{ x: 0, y: 0 },
-				{ x: 4, y: 0 },
-				{ x: 4, y: 1 },
-				{ x: 0, y: 1 }
+				[ 0, 0 ],
+				[ 4, 0 ],
+				[ 4, 1 ],
+				[ 0, 1]
 			], [
-				{ x: 0, y: 3 },
-				{ x: 4, y: 3 },
-				{ x: 4, y: 4 },
-				{ x: 0, y: 4 }
+				[ 0, 3 ],
+				[ 4, 3 ],
+				[ 4, 4 ],
+				[ 0, 4 ]
 			]
 		];
 		let result = difference(subject, clip);
@@ -93,7 +93,7 @@ describe('Difference', function() {
 		expected.forEach(expectedComponent => {
 			let resultComponent = result.find(resultComponent =>
 						resultComponent.every(resultVertex => 
-						expectedComponent.some(expectedVertex => Math.abs(resultVertex.x - expectedVertex.x) < EPSILON && Math.abs(resultVertex.y - expectedVertex.y) < EPSILON)));
+						expectedComponent.some(expectedVertex => Math.abs(resultVertex[0] - expectedVertex[0]) < EPSILON && Math.abs(resultVertex[1] - expectedVertex[1]) < EPSILON)));
 			
 			expect(resultComponent).to.exist;
 			resultComponent = reorder(resultComponent, expectedComponent);
@@ -102,7 +102,7 @@ describe('Difference', function() {
 	})
 
 	it('disjoint', function() {
-		const clip = subject.map(vertex => ({ x: vertex.x + 10, y: vertex.y + 10 }));
+		const clip = subject.map(vertex => [ vertex[0] + 10, vertex[1] + 10 ]);
 		let result = difference(subject, clip);
 		expect(result).to.be.an('array').with.lengthOf(1);
 		result = reorder(result[0], subject);
